@@ -1,0 +1,5 @@
+# gofmt는 LF만 허용하고 bash는 CRLF 스크립트를 실행하지 못한다. Windows 체크아웃(core.autocrlf=true)에서도 LF로 유지한다.
+*.go    text eol=lf
+go.mod  text eol=lf
+go.sum  text eol=lf
+*.sh    text eol=lf
