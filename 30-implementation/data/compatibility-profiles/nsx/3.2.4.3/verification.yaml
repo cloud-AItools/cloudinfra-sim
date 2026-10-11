@@ -1,0 +1,98 @@
+# API별 검증 상태(TR-COV-0201). cmd/evidence가 생성한다. 손으로 Integration Tested로 고치지 않는다.
+commit: src-86f595012fbf0336
+profile_hash: 80b4f72235dd49cc8c472044db889e8634b09a6c7832fb5dbdf78780a769a000
+generated_at: 2026-10-11T12:19:45Z (cmd/evidence)
+apis:
+    NSX-001A:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, simulator-e2e/TestScenario01_AuthenticationFailures, contract/TestNSXResponseSchemaContract]
+    NSX-001B:
+        status: Implemented
+        note: POST /api/session/create는 스펙 밖. API Guide 본문 근거 미확보. 실행 범위 밖
+    NSX-002:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestNSXResponseSchemaContract]
+    NSX-003:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestNSXResponseSchemaContract]
+    NSX-004:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestNSXResponseSchemaContract]
+    NSX-005:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestNSXResponseSchemaContract]
+    NSX-006:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestNSXResponseSchemaContract]
+    NSX-007:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestNSXResponseSchemaContract]
+    NSX-008:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario06_ListPaginationDeleteTags, contract/TestNSXResponseSchemaContract]
+    NSX-009:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario06_SegmentCreate, contract/TestNegativeNSX, contract/TestNSXResponseSchemaContract]
+    NSX-010:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario06_SegmentCreate, simulator-e2e/TestScenario06_ListPaginationDeleteTags, contract/TestNSXResponseSchemaContract]
+    NSX-011:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario06_ListPaginationDeleteTags, contract/TestNSXResponseSchemaContract]
+    NSX-013:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-014:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-015:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-016:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-017:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-018:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestRealizationDependenciesAndFailure, contract/TestNSXResponseSchemaContract]
+    NSX-019:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-020:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestNSXResponseSchemaContract]
+    NSX-021:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, simulator-e2e/TestRealizationDependenciesAndFailure, contract/TestNSXResponseSchemaContract]
+    NSX-022:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXSecurityResources, contract/TestNSXGroupMembership, simulator-e2e/TestScenario07_SecurityPolicyChange, contract/TestNSXPhase4bResponseSchema]
+    NSX-023:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXSecurityResources, simulator-e2e/TestScenario07_SecurityPolicyChange, contract/TestNSXPhase4bResponseSchema]
+    NSX-024:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXSecurityResources, simulator-e2e/TestScenario07_SecurityPolicyChange, contract/TestNSXPhase4bResponseSchema]
+    NSX-025:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXSecurityResources, simulator-e2e/TestScenario07_SecurityPolicyChange, contract/TestNSXPhase4bResponseSchema]
+    NSX-026:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXRoutingResources, contract/TestNSXPhase4bResponseSchema]
+    NSX-027:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXHierarchicalAPI]
+    NSX-028:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXSearchAndFilters, contract/TestNSXPhase4bResponseSchema]
+    NSX-029:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXManagerInventory, contract/TestNSXPhase4bResponseSchema]
+    NSX-030:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXManagerInventory, contract/TestNSXPhase4bResponseSchema]
+    NSX-031:
+        status: Integration Tested
+        evidence: [SRC-NSX-321, contract/TestNSXRoutingResources, contract/TestNSXManagerInventory, contract/TestNSXPhase4bResponseSchema]

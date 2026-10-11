@@ -1,0 +1,119 @@
+# CI(NFR-ARC-0111, WP 5.7, AC-11). 저장소를 git 원격에 올리면 동작한다(2026-10-11 기준 미구성 — 사용자 조치).
+#
+# - unit: GitHub 호스트 러너(Windows·Linux·macOS). 구현 단위 시험, 설치 스크립트 시험, 교차 빌드. NSX 스펙이 필요 없다.
+# - integration: 자체 호스트 러너(라벨 cloudinfra-sim). NSX 스펙·vAPI 계약은 저장소에 넣지 않으므로(PRD-4 D11) 사용자가
+#   러너 머신에 내려받아 두고 러너 환경변수로 알린다: SIM_NSX_SPEC_DIR(nsx_api.json·nsx_policy_api.json이 있는 디렉터리),
+#   Ansible 자체 테스트(40-test/ansible)는 러너가 Linux·macOS일 때 venv에 ansible-core·pyVmomi·community.vmware를 설치해 돌린다,
+#   VAPI_CONTRACT(vapi-contract.json 경로). 계약·E2E·시나리오·Footprint(리소스 예산 측정 포함)·추가 버전 프로파일을 돌리고
+#   증거(verification.yaml)를 만들어 산출물로 남긴다.
+# - release: v* 태그에서 배포 패키지(SHA256SUMS 포함)를 만든다.
+name: ci
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 30-implementation/go.mod
+          cache-dependency-path: |
+            30-implementation/go.sum
+            40-test/go.sum
+      - name: vet·단위 시험
+        working-directory: 30-implementation
+        run: |
+          test -z "$(gofmt -l ./cmd ./internal)" || { gofmt -l ./cmd ./internal; exit 1; }
+          go vet ./...
+          go test -count=1 ./...
+      - name: 설치 스크립트 시험(macOS·Linux, 임시 hosts·dry-run)
+        if: runner.os != 'Windows'
+        working-directory: 40-test
+        run: go test -count=1 ./deployment
+      - name: 교차 빌드
+        working-directory: 30-implementation
+        run: |
+          for p in windows/amd64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+            CGO_ENABLED=0 GOOS=${p%/*} GOARCH=${p#*/} go build -trimpath -o /dev/null ./cmd/cloudinfra-sim
+          done
+
+  integration:
+    needs: unit
+    runs-on: [self-hosted, cloudinfra-sim]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 30-implementation/go.mod
+      - name: NSX 스펙 확인(D11, 러너 머신에 사용자가 배치)
+        run: |
+          test -n "$SIM_NSX_SPEC_DIR" && test -f "$SIM_NSX_SPEC_DIR/nsx_policy_api.json" || { echo "SIM_NSX_SPEC_DIR 미설정"; exit 1; }
+          cp "$SIM_NSX_SPEC_DIR"/nsx_api.json "$SIM_NSX_SPEC_DIR"/nsx_policy_api.json 30-implementation/data/compatibility-profiles/nsx/3.2.4.3/
+      - name: Ansible 제어 노드 준비(TR-COV-0306, Linux·macOS 러너 — Windows는 제어 노드 미지원)
+        if: runner.os != 'Windows'
+        working-directory: 40-test/ansible
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+          .venv/bin/ansible-galaxy collection install -r requirements.yml
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+          echo "ANSIBLE_REQUIRED=1" >> "$GITHUB_ENV"
+      - name: 전체 회귀(계약·E2E·시나리오·SDK·Ansible·Footprint)
+        working-directory: 40-test
+        run: |
+          go vet ./...
+          set +e
+          go test -count=1 -timeout 30m -json ./... > results.json
+          status=$?
+          set -e
+          grep -E '"Action":"fail"' results.json | head -50 || true
+          exit $status
+      - name: 추가 버전 프로파일(vCenter 7.0.2)
+        working-directory: 40-test
+        run: SIM_TEST_VCENTER_VERSION=7.0.2.00000 go test -count=1 -timeout 30m -short ./contract ./simulator-e2e ./sdk
+      - name: 증거 생성(verification.yaml)
+        run: |
+          (cd 30-implementation && go test -json ./... > ../40-test/results-impl.json)
+          (cd 40-test && go run ./cmd/evidence -results results.json)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: |
+            30-implementation/data/compatibility-profiles/*/*/verification.yaml
+            40-test/results*.json
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 30-implementation/go.mod
+      - run: bash 50-deployment/dist.sh dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS

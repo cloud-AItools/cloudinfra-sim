@@ -1,0 +1,6 @@
+# Ansible 자체 테스트 Python 의존성(제어 노드: Linux·macOS·WSL — Windows는 Ansible 제어 노드를 지원하지 않는다).
+# 설치: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+ansible-core>=2.17,<2.20
+pyvmomi>=8.0.3,<10
+# community.vmware 모듈 공통 의존(module_utils/vmware.py가 requests를 import)
+requests>=2.31,<3

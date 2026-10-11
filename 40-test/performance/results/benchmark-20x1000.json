@@ -1,0 +1,65 @@
+[
+  {
+    "case": "vm20-seg1000",
+    "vms": 20,
+    "segments": 1000,
+    "startup_ms": 15355,
+    "idle_memory_mb": 144.662528,
+    "loads": [
+      {
+        "clients": 10,
+        "requests": 1455,
+        "errors": 0,
+        "rps": 281.6606401614003,
+        "p50_ms": 0.51,
+        "p95_ms": 164.878,
+        "p99_ms": 218.789,
+        "peak_memory_mb": 153,
+        "duration_ms": 5165,
+        "p95_ms_by_kind": {
+          "nsx-segment-get": 2.864,
+          "nsx-segment-patch": 218.789,
+          "nsx-tier1-list": 1.313,
+          "rest-vm-get": 2.139,
+          "rest-vm-list": 3.1
+        }
+      },
+      {
+        "clients": 50,
+        "requests": 1270,
+        "errors": 0,
+        "rps": 216.18100893753572,
+        "p50_ms": 0.686,
+        "p95_ms": 1137.306,
+        "p99_ms": 1965.536,
+        "peak_memory_mb": 163,
+        "duration_ms": 5874,
+        "p95_ms_by_kind": {
+          "nsx-segment-get": 22.069,
+          "nsx-segment-patch": 1965.536,
+          "nsx-tier1-list": 11.887,
+          "rest-vm-get": 11.074,
+          "rest-vm-list": 21.15
+        }
+      },
+      {
+        "clients": 100,
+        "requests": 1379,
+        "errors": 0,
+        "rps": 203.2713539468568,
+        "p50_ms": 2.82,
+        "p95_ms": 2646.084,
+        "p99_ms": 3354.648,
+        "peak_memory_mb": 177,
+        "duration_ms": 6784,
+        "p95_ms_by_kind": {
+          "nsx-segment-get": 40.68,
+          "nsx-segment-patch": 3354.648,
+          "nsx-tier1-list": 16.461,
+          "rest-vm-get": 36.146,
+          "rest-vm-list": 47.128
+        }
+      }
+    ]
+  }
+]

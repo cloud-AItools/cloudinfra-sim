@@ -1,0 +1,57 @@
+# vCenter 7.0 U2 프로파일 (Phase 4b 추가 버전, FR-API-0311, PRD-4 D1 범위 하한 7.0 U2). VERSION_PROFILE_SPEC.md.
+# 7.0.3 기준 프로파일 값을 복사하지 않고 출처별로 다시 정했다(R-08). 근거가 없는 값은 주석에 가정으로 표시한다.
+product: VMware vCenter Server
+version: 7.0.2
+build: "17694817"
+api_version: 7.0.2.0
+# /sdk/vimServiceVersions.xml의 priorVersions (FR-VC-0207). pyVmomi 버전 계보에서 vim 7.0.2.0의 상위 버전(7.0.2.0 미만).
+prior_versions: [7.0.1.1, 7.0.1.0, 7.0.0.2, 7.0.0.0, 6.7.3, 6.7.2, 6.7.1, 6.7, 6.5, 6.0, 5.5, 5.1, 5.0]
+# ServiceContent.about (FR-API-0306). version·build: Broadcom KB 326316(vCenter Server 7.0 Update 2, 7.0.2.00000, 17694817).
+# apiVersion 7.0.2.0: vSphere Web Services API 7.0U2 참조의 'New and Changed ... in 7.0.2.0'. 나머지 필드 형식은 vCenter 관례(가정).
+about:
+  name: VMware vCenter Server
+  fullName: VMware vCenter Server 7.0.2 build-17694817
+  vendor: VMware, Inc.
+  version: 7.0.2
+  build: "17694817"
+  localeVersion: INTL
+  localeBuild: "000"
+  osType: linux-x64
+  productLineId: vpx
+  apiType: VirtualCenter
+  apiVersion: 7.0.2.0
+  licenseProductName: VMware VirtualCenter Server
+  licenseProductVersion: "7.0"
+# GET /api/appliance/system/version. version·build: KB 326316, 출시일 2021-03-09.
+# /api 경로는 7.0 U2에서 도입되었으나(VMware 블로그 'vSphere 7 Update 2 REST API Modernization') 7.0 U2용 SDK 계약을 확보하지
+# 않았다. REST API는 이 프로파일의 실행 범위에 넣지 않는다(7.0.3.2 SDK 계약을 그대로 적용하지 않음, R-08). 값 형식은 가정이다.
+appliance_version:
+  product: VMware vCenter Server
+  type: vCenter Server with an embedded Platform Services Controller
+  version: 7.0.2.00000
+  build: "17694817"
+  releasedate: "March 9, 2021"
+  summary: Update for VMware vCenter Server 7.0
+# 타입 메타데이터는 버전별 도입 정보를 모두 담은 단일 파일(pyVmomi 9.1.1.0)이다. 7.0.3 프로파일과 같은 파일을 쓴다(복사 아님:
+# 파일 안에 버전별 since가 있어 세션 버전 7.0.2.0으로 필터링한다).
+# 수신 TLS 버전(R-45 ③, 2026-10-11 결정): vSphere는 8.0 U3부터 TLS 1.3을 지원한다(KB 377237). 7.0 TLS Configurator는 1.0 ~ 1.2만 다룬다(KB 313841).
+tls:
+  max_version: "1.2"
+  basis: KB 377237, KB 313841 — 7.0에 TLS 1.3 없음(문서상 추론). 하한은 Gateway 기본 1.2.
+typeinfo: ../7.0.3.02500/vim-typeinfo.json
+spec_sources:
+  - id: SRC-VIM-TYPEINFO
+    file: ../7.0.3.02500/vim-typeinfo.json
+    version: pyVmomi 9.1.1.0 (_typeinfo_core/query/vim)
+    origin: https://pypi.org/project/pyvmomi/9.1.1.0/ (Apache-2.0)
+  - id: SRC-GOVMOMI
+    version: govmomi v0.56.0
+    origin: https://github.com/vmware/govmomi (Apache-2.0)
+  - id: SRC-KB-326316
+    version: 7.0.2.00000 / 17694817
+    origin: https://knowledge.broadcom.com/external/article/326316 (조회 2026-10-10)
+  - id: SRC-VIM-API-702
+    version: vSphere Web Services API 7.0U2 (7.0.2.0)
+    origin: https://developer.broadcom.com/xapis/vsphere-web-services-api/7.0U2/new-mo-types-landing.html (조회 2026-10-10)
+# 기동 판정 대상 API: SOAP 계열만(REST·Content Library는 계약 근거가 7.0.3 SDK뿐). API_COVERAGE_MATRIX §7.
+execution_scope: [VC-SOAP-001, VC-SOAP-002, VC-SOAP-003, VC-SOAP-004, VC-SOAP-005, VC-SOAP-006, VC-SOAP-007, VC-SOAP-008, VC-SOAP-009, VC-SOAP-010, VC-SOAP-011, VC-SOAP-012, VC-SOAP-013, VC-SOAP-014, VC-SOAP-015, VC-SOAP-016, VC-NET-001, VC-SOAP-017, VC-SOAP-018, VC-SOAP-019, VC-SOAP-020, VC-SOAP-021, VC-SOAP-022, VC-SOAP-023, VC-LOOKUP-001, VC-PBM-001]

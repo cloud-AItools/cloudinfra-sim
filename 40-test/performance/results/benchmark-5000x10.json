@@ -1,0 +1,68 @@
+[
+  {
+    "case": "vm5000-seg10",
+    "vms": 5000,
+    "segments": 10,
+    "startup_ms": 209788,
+    "idle_memory_mb": 466.161664,
+    "loads": [
+      {
+        "clients": 10,
+        "requests": 285,
+        "errors": 0,
+        "rps": 49.279018563907734,
+        "p50_ms": 1.547,
+        "p95_ms": 988.742,
+        "p99_ms": 1216.257,
+        "peak_memory_mb": 430,
+        "duration_ms": 5783,
+        "p95_ms_by_kind": {
+          "nsx-segment-get": 8.847,
+          "nsx-segment-patch": 1216.257,
+          "nsx-tier1-list": 4.967,
+          "rest-vm-get": 2.577,
+          "rest-vm-list": 56.245
+        }
+      },
+      {
+        "clients": 50,
+        "requests": 465,
+        "errors": 1,
+        "rps": 49.02192147525242,
+        "p50_ms": 20.085,
+        "p95_ms": 4967.764,
+        "p99_ms": 5343.028,
+        "peak_memory_mb": 612,
+        "duration_ms": 9485,
+        "error_kinds": {
+          "nsx-segment-get: Get \"https://nsx.cloudinfra-sim.test/policy/api/v1/infra/segments/seg-03\": remote error: tls: bad record MAC": 1
+        },
+        "p95_ms_by_kind": {
+          "nsx-segment-get": 55.396,
+          "nsx-segment-patch": 5343.028,
+          "nsx-tier1-list": 33.93,
+          "rest-vm-get": 43.879,
+          "rest-vm-list": 213.755
+        }
+      },
+      {
+        "clients": 100,
+        "requests": 720,
+        "errors": 0,
+        "rps": 49.96781136051919,
+        "p50_ms": 49.091,
+        "p95_ms": 9645.952,
+        "p99_ms": 9997.822,
+        "peak_memory_mb": 872,
+        "duration_ms": 14409,
+        "p95_ms_by_kind": {
+          "nsx-segment-get": 82.126,
+          "nsx-segment-patch": 9997.822,
+          "nsx-tier1-list": 53.003,
+          "rest-vm-get": 64.229,
+          "rest-vm-list": 425.04
+        }
+      }
+    ]
+  }
+]

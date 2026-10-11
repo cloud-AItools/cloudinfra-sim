@@ -1,0 +1,27 @@
+# 리소스 예산 측정 기준 Fixture (NFR-0108) 겸 기본 Seed (TR-SCN-0201 ~ TR-SCN-0204)
+name: default-small
+seed: 20261010
+namespace: default-small   # 환경 ID 공간(FR-DM-0207)
+vcenter:
+  datacenters: 1
+  clusters: 1
+  hosts_per_cluster: 3
+  datastores: 2
+  portgroups: 4
+  vms_per_resource_pool: 20
+  # 가상 용량 (FR-BE-0701 예시값)
+  host_cpu_cores: 64
+  host_memory_gb: 256
+nsx:
+  transport_zones:
+    - {id: tz-overlay, display_name: TZ-Overlay, transport_type: OVERLAY}
+    - {id: tz-vlan, display_name: TZ-VLAN, transport_type: VLAN}
+  tier0s: [t0-a]
+  tier1s: [t1-a, t1-b]
+  edge_clusters: [edge-cluster-01]
+  segments: 10
+  # NSX 준비 VDS(DVS0)에 연결된 TZ(D8): 이 TZ의 Segment가 vCenter NSX DVPG로 나타난다(Phase 3)
+  vds_transport_zones: [tz-overlay, tz-vlan]
+  # Phase 4b(WP 4.9): Group grp-NN(VM Tag 조건 app|grp-NN), Security Policy sp-NN(Rule 1개: grp-NN → ANY, HTTPS)
+  groups: 5
+  security_policies: 3

@@ -1,0 +1,40 @@
+# Snapshot/Restore(TR-SCN-0104·0105, NFR-0206): 기준 상태 저장 → 변경 → 복원 → 같은 상태·일관성 확인.
+name: snapshot-restore
+description: VM과 Segment를 만든 상태를 Snapshot으로 저장하고, 둘을 지운 뒤 복원해 다시 보이는지와 불일치가 없는지 확인한다. 복원은 세션을 무효로 만들므로 다시 로그인한다.
+requirements: [TR-SCN-0104, TR-SCN-0105, NFR-0206, NFR-0207, FR-DM-0209]
+steps:
+  - {name: SOAP 로그인, stage: login, soap: {action: login}}
+  - {name: VM 생성, stage: workflow, soap: {action: create_vm, name: scn-snap-vm, cpus: 1, memory_mb: 256}, save: {vm: result}}
+  - name: Segment 생성
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/segments/scn-snap-seg, auth: basic, body: '{"display_name":"scn-snap-seg","transport_zone_path":"/infra/sites/default/enforcement-points/default/transport-zones/tz-overlay"}'}
+    expect: {status: 200}
+  - name: Snapshot 생성
+    stage: workflow
+    http: {target: admin, method: POST, path: /v1/snapshots, body: '{"name":"scn-snapshot"}'}
+    expect: {status: 201, json: {name: scn-snapshot}}
+  - {name: VM 삭제, stage: workflow, soap: {action: destroy_vm, vm: "${vm}"}}
+  - name: Segment 삭제
+    stage: workflow
+    http: {target: nsx, method: DELETE, path: /policy/api/v1/infra/segments/scn-snap-seg, auth: basic}
+    expect: {status: 200}
+  - name: 복원
+    stage: recover
+    http: {target: admin, method: POST, path: /v1/snapshots/scn-snapshot/restore}
+    expect: {status: 200, json: {consistent: true}}
+  - {name: 복원 뒤 기존 세션 무효, stage: verify, soap: {action: count_vms}, expect: {fault: NotAuthenticated}}
+  - {name: 재로그인, stage: login, soap: {action: login}}
+  - {name: VM 복원(같은 이름 1개), stage: verify, soap: {action: count_vms, name: scn-snap-vm}, expect: {count: 1}}
+  - {name: 같은 MoRef, stage: verify, soap: {action: get_vm, vm: "${vm}"}, expect: {power_state: poweredOff, cpus: 1, memory_mb: 256}}
+  - name: Segment 복원
+    stage: verify
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/segments/scn-snap-seg, auth: basic}
+    expect: {status: 200, json: {display_name: scn-snap-seg}}
+  - name: 불일치 없음
+    stage: verify
+    http: {target: admin, method: GET, path: /v1/consistency}
+    expect: {status: 200, json: {consistent: true}}
+  - name: Snapshot 삭제
+    stage: workflow
+    http: {target: admin, method: DELETE, path: /v1/snapshots/scn-snapshot}
+    expect: {status: 204}

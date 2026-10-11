@@ -1,0 +1,34 @@
+# MVP 시나리오: VM 생명주기 (TR-SCN-0301 단계 ②~⑥, Scenario 03~05 흐름). 실행: Admin API POST /v1/scenarios/{name}/start 또는 40-test simulator-e2e/TestScenarioRunner
+name: mvp-vm-lifecycle
+description: vCenter SOAP·REST로 VM을 생성·변경·전원·삭제하고 기본 오류(InvalidPowerState, DuplicateName, 없는 ID)를 확인한다.
+requirements: [TR-SCN-0301, TR-E2E-0301, TR-E2E-0401, TR-E2E-0501, TR-COV-0302, TR-COV-0303]
+steps:
+  - {name: SOAP 로그인, stage: login, soap: {action: login}}
+  - name: REST 세션 생성
+    stage: login
+    http: {target: vcenter, method: POST, path: /api/session, auth: basic}
+    expect: {status: 201}
+    save: {token: "."}
+  - {name: VM 수 확인(Fixture 20), stage: inspect, soap: {action: count_vms}, expect: {count: 20}}
+  - name: VM 생성
+    stage: workflow
+    soap: {action: create_vm, name: mvp-vm, cpus: 1, memory_mb: 512}
+    save: {vm: result}
+  - {name: 생성 직후 상태, stage: inspect, soap: {action: get_vm, vm: "${vm}"}, expect: {power_state: poweredOff, cpus: 1, memory_mb: 512}}
+  - name: REST로 같은 VM 조회
+    stage: inspect
+    http: {target: vcenter, method: GET, path: "/api/vcenter/vm/${vm}", headers: {vmware-api-session-id: "${token}"}}
+    expect: {status: 200, json: {name: mvp-vm, power_state: POWERED_OFF, cpu.count: 1, memory.size_MiB: 512}}
+  - {name: 같은 이름 생성 거부, stage: error, soap: {action: create_vm, name: mvp-vm, cpus: 1, memory_mb: 512}, expect: {fault: DuplicateName}}
+  - {name: CPU·메모리 변경, stage: workflow, soap: {action: reconfigure_vm, vm: "${vm}", cpus: 2, memory_mb: 1024}}
+  - {name: 전원 켜기, stage: workflow, soap: {action: power_on, vm: "${vm}"}}
+  - {name: 변경·전원 상태, stage: inspect, soap: {action: get_vm, vm: "${vm}"}, expect: {power_state: poweredOn, cpus: 2, memory_mb: 1024}}
+  - {name: 켜진 VM 삭제 거부, stage: error, soap: {action: destroy_vm, vm: "${vm}"}, expect: {fault: InvalidPowerState}}
+  - {name: 전원 끄기, stage: workflow, soap: {action: power_off, vm: "${vm}"}}
+  - {name: 삭제, stage: workflow, soap: {action: destroy_vm, vm: "${vm}"}}
+  - {name: 삭제 후 SOAP 조회, stage: verify, soap: {action: get_vm, vm: "${vm}"}, expect: {fault: ManagedObjectNotFound}}
+  - name: 삭제 후 REST 조회
+    stage: verify
+    http: {target: vcenter, method: GET, path: "/api/vcenter/vm/${vm}", headers: {vmware-api-session-id: "${token}"}}
+    expect: {status: 404, json: {error_type: NOT_FOUND}}
+  - {name: VM 수 복귀, stage: verify, soap: {action: count_vms}, expect: {count: 20}}

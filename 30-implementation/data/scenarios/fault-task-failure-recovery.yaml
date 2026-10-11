@@ -1,0 +1,31 @@
+# Scenario 09 흐름(TR-E2E-0901 ~ 0904): 실행 중 Task 실패 주입 → 오류 확인 → 재시도·보상 → 최종 상태·이벤트 확인.
+name: fault-task-failure-recovery
+description: CreateVM_Task를 실행 중(300 ms 뒤) 실패시키고, 남은 객체가 없음을 확인한 뒤 재시도한다. 전원 켜기 실패에는 보상(삭제)으로 원상 복구하고, 다시 만든 VM의 전원 이벤트를 조회한다.
+requirements: [TR-E2E-0901, TR-E2E-0902, TR-E2E-0903, TR-E2E-0904, TR-SCN-0303, TR-SCN-0109, TR-SCN-0110]
+steps:
+  - {name: SOAP 로그인, stage: login, soap: {action: login}}
+  - name: Task 실패 주입(다음 CreateVM_Task 1회, running 300 ms 뒤)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"layer":"vcenter","match":{"soap_method":"CreateVM_Task","user":"${vcenter_user}"},"action":{"type":"task_fail","fault":"InsufficientResourcesFault","delay_ms":300},"count":1}'}
+    expect: {status: 201}
+  - {name: VM 생성 → 실패, stage: error, soap: {action: create_vm, name: scn09-vm, cpus: 1, memory_mb: 512}, expect: {fault: InsufficientResourcesFault}}
+  - {name: 실패한 시도가 남긴 VM 없음, stage: verify, soap: {action: count_vms, name: scn09-vm}, expect: {count: 0}}
+  - {name: 재시도 → 성공, stage: recover, soap: {action: create_vm, name: scn09-vm, cpus: 1, memory_mb: 512}, save: {vm: result}}
+  - name: 전원 켜기 실패 주입(이 VM 1회)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"layer":"vcenter","match":{"soap_method":"PowerOnVM_Task","resource":"${vm}"},"action":{"type":"task_fail","fault":"InvalidState"},"count":1}'}
+    expect: {status: 201}
+  - {name: 전원 켜기 → 실패, stage: error, soap: {action: power_on, vm: "${vm}"}, expect: {fault: InvalidState}}
+  - {name: 보상 — 만든 VM 삭제, stage: recover, soap: {action: destroy_vm, vm: "${vm}"}}
+  - {name: 원상 복구 확인, stage: verify, soap: {action: count_vms, name: scn09-vm}, expect: {count: 0}}
+  - {name: 다시 생성, stage: recover, soap: {action: create_vm, name: scn09-vm, cpus: 1, memory_mb: 512}, save: {vm2: result}}
+  - {name: 규칙 소진 뒤 전원 켜기 성공, stage: recover, soap: {action: power_on, vm: "${vm2}"}}
+  - {name: 같은 이름 VM 정확히 1개, stage: verify, soap: {action: count_vms, name: scn09-vm}, expect: {count: 1}}
+  - name: 이벤트 조회 — 전원 켜짐 이벤트 1건
+    stage: inspect
+    http: {target: admin, method: GET, path: "/v1/events?type=VmPoweredOnEvent&entity=${vm2}"}
+    expect: {status: 200, json: {vcenter.#: 1, vcenter.0.entity_name: scn09-vm}}
+  - name: 주입 규칙은 각 1회만 적용(소진)
+    stage: verify
+    http: {target: admin, method: GET, path: /v1/faults}
+    expect: {status: 200, json: {rules.#: 2, rules.0.hits: 1, rules.1.hits: 1}}

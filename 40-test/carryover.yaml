@@ -1,0 +1,19 @@
+# Phase 이월 결정(2026-10-10, 사용자 결정): Phase 1 미완 항목을 Phase 2a로 넘긴다. 추적표에 이월로 표시된다.
+# 형식: 요구사항 ID: "이관 단계 — 사유"
+# Phase 2a(2026-10-10)에서 해소: NFR-0402, NFR-0502, NFR-0505, NFR-0506, FR-NSX-0231 (contract/retention_test.go, negative_test.go)
+# Phase 2b(2026-10-10)에서 해소: FR-API-0101, FR-API-0102 (contract/soap_schema_test.go·nsx_schema_test.go 응답 스키마 대조),
+#   NFR-0508 (--retain-* 설정·무제한 거부, config.TestRetentionLimits·contract/TestTaskRetentionAndLogs; full 회전은 요구사항상 Phase 5)
+FR-NSX-0104: "공식 문서 근거 확보 후 — 스펙 제공 구현·시험 완료(contract/TestNegativeNSX), 경로가 스펙 밖이며 API Guide 근거 미확보(가정)"
+NFR-ARC-0111: "Phase 5에 CI 워크플로(.github/workflows/ci.yml: 호스트 러너 단위·설치·교차 빌드, 자체 호스트 러너 통합·Footprint·증거)를 작성했으나 저장소(git 원격)·러너가 없어 실행하지 못함 — 사용자 조치 필요. 같은 내용은 make regression으로 로컬 실행"
+NFR-ARC-0308: "설치 스크립트 실행 확인(관리자 권한, 사용자 실행 필요)"
+FR-API-0303: "MVP 이후 — 권장 항목(MVP –)"
+# Phase 3(2026-10-10)에서 해소: NFR-0403(전송 계층 Fault Injection Log, contract/TestTransportFaultRules)
+FR-BE-0703: "선택 항목(채택 시) — Overcommit·Reservation 등 고급 용량 모델은 미채택. 현재 용량 모델: 호스트 가상 용량(Fixture) 상한, VM 단위 검사"
+# Phase 4a(2026-10-10)에서 해소: FR-MET-0201(Datastore usage on disk 알람), FR-MET-0103(덮어쓰기로 임계 초과 값 생성 — Phase 3 분류 정정)
+# Phase 4b(2026-10-11) 미채택 제안 — 사용자 확정 필요(DEVELOPMENT_PLAN §12). 구현하지 않았으며 실행 범위 밖이다.
+FR-VC-0204: "Phase 4b 미채택(제안) — 구형 /rest는 7.0 U2부터 deprecated이고 /rest 응답 래핑 계약 근거(SDK 바인딩은 /api 메타데이터만 제공)를 확보하지 못함. vcsim 구형 경로는 세션 내부 연결에만 사용"
+FR-VC-0209: "Phase 4b 미채택(제안) — SSO STS(SAML 토큰 발급·LoginByToken)는 보안 기능이며 vcsim은 서명 없는 토큰을 받아들임(D10, Gateway에서 SIGN 거부 유지)"
+FR-VC-0211: "Phase 4b 미채택(제안) — ESXi 직접 경로는 가상 ESXi 호스트 이름의 hosts 등록(설치 스크립트 변경)과 토폴로지 결정(D6)이 필요"
+FR-NSX-0222: "Phase 4b 미채택(제안) — 선택 항목. Statistics·Status는 실시간 데이터 의미가 없어 결정론 값 규칙(FR-MET) 확정 후 검토"
+# Phase 5(2026-10-11)
+TR-COV-0306: "2026-10-11 사용자 결정: Ansible 자체 테스트만 채택, Terraform 미채택 — 40-test/ansible, WSL Ubuntu 24.04에서 실행 통과(results-ansible.json, DEVELOPMENT_PLAN §13.7)"

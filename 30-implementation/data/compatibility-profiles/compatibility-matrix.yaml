@@ -1,0 +1,10 @@
+# 허용되는 vCenter × NSX 조합 (FR-API-0305, PRD-4 D1)
+# 근거: VMware 상호운용성 매트릭스. interop: verified(매트릭스 확인) | unverified(미확인 — development 모드에서만 기동,
+# release 모드는 거부). 추가 조합은 매트릭스 확인 후 verified로 바꾼다.
+combinations:
+  - vcenter: 7.0.3.02500   # vCenter 7.0 U3w, 빌드 24927011
+    nsx: 3.2.4.3           # NSX-T 3.2.4.3, 빌드 24942842
+    interop: verified      # D1 결정(첫 기준 조합)
+  - vcenter: 7.0.2.00000   # vCenter 7.0 U2, 빌드 17694817 (Phase 4b 추가 버전)
+    nsx: 3.2.4.3
+    interop: unverified    # 2026-10-10 상호운용성 매트릭스(동적 페이지) 미확인. 사용자 확인 필요(DEVELOPMENT_PLAN §12)

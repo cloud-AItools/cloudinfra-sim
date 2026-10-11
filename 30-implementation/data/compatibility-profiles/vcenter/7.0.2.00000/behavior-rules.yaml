@@ -1,0 +1,16 @@
+# vCenter 7.0.2 버전별 동작 규칙(FR-VC-0418). 7.0.3과 다르다는 근거도 같다는 근거도 확보하지 못했다.
+# 아래 값은 7.0.3 프로파일과 같은 가정이며, 버전 간 동일성 자체가 가정이다(R-08 — 근거 확보 시 갱신).
+capacity:
+  fault: InsufficientResourcesFault
+  basis: assumption (7.0.3과 같다고 가정)
+reconfigure_powered_on:
+  cpu_increase_requires_hot_add: true
+  cpu_decrease_requires_power_off: true
+  memory_increase_requires_hot_add: true
+  memory_decrease_requires_power_off: true
+  fault: InvalidPowerState
+  basis: assumption (7.0.3과 같다고 가정)
+session:
+  idle_timeout_sec: 1800
+  rest_idle_timeout_sec: 1800
+  basis: assumption (7.0.3과 같다고 가정)

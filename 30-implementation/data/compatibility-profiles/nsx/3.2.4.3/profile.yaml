@@ -1,0 +1,34 @@
+# NSX-T 3.2.4.3 프로파일 (PRD-4 D1). 계약 근거는 공개 스펙 3.2.1.0.0, 3.2.4.3과의 차이는 미검증(FR-API-0309).
+product: VMware NSX-T Data Center
+version: 3.2.4.3
+build: "24942842"
+# GET /api/v1/node/version (FR-NSX-0202, FR-API-0306). 값 형식은 <버전>.0.<빌드>.
+node_version:
+  product_version: 3.2.4.3.0.24942842
+  node_version: 3.2.4.3.0.24942842
+# 스펙 파일은 저장소·배포물에 포함하지 않는다(D11). 사용자 측 다운로드: 50-deployment/install/Get-NsxSpec.ps1
+spec_files:
+  manager: nsx_api.json
+  policy: nsx_policy_api.json
+spec_sources:
+  - id: SRC-NSX-321
+    file: nsx_api.json
+    version: 3.2.1.0.0
+    sha256: acd5b1bac00ac7a555c52967708537a1b8e50a796cfad6fec880b313c5e2fb22
+    origin: https://developer.broadcom.com/xapis/nsx-t-data-center-rest-api/3.2.1/x-references/
+    note: 3.2.4.x 스펙 미공개. 3.2.4.3과 차이 미검증.
+  - id: SRC-NSX-321
+    file: nsx_policy_api.json
+    version: 3.2.1.0.0
+    sha256: f813fa42378b82cd8fa99f250fd02f9415baaf2995ad497cbafe91dc1f8babdb
+    origin: https://developer.broadcom.com/xapis/nsx-t-data-center-rest-api/3.2.1/x-references/
+# 수신 TLS 버전(R-45 ③, 2026-10-11 결정): NSX는 4.1.2부터 웹·API에 TLS 1.3을 기본 사용한다(KB 319144). 3.2.x는 1.2까지로 본다.
+tls:
+  max_version: "1.2"
+  basis: KB 319144 — 3.2.x에 TLS 1.3 없음(문서상 추론). 하한은 Gateway 기본 1.2.
+behavior:
+  realization_delay_ms: 0
+  # 세션 유휴 만료(FR-API-0209): SRC-NSX-321 HttpServiceProperties.session_timeout 기본값 1800초
+  session_timeout_sec: 1800
+# 기동 판정 대상(FR-API-0302): Phase 1(Scenario 01)부터 단계별로 넓혔다. Phase 4b 추가(NSX-022 ~ 031)는 2026-10-11 결정(D2 확대).
+execution_scope: [NSX-001A, NSX-002, NSX-003, NSX-004, NSX-005, NSX-006, NSX-007, NSX-008, NSX-009, NSX-010, NSX-011, NSX-013, NSX-014, NSX-015, NSX-016, NSX-017, NSX-018, NSX-019, NSX-020, NSX-021, NSX-022, NSX-023, NSX-024, NSX-025, NSX-026, NSX-027, NSX-028, NSX-029, NSX-030, NSX-031]

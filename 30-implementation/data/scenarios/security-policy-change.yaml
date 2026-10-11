@@ -1,0 +1,48 @@
+# Scenario 07 흐름(TR-E2E-0701 ~ 0704): Group·Service·Security Policy 생성, Realization 대기, Revision 기반 Rule 수정·충돌.
+name: security-policy-change
+description: NSX Group(VM Tag 조건)·Service·Security Policy(Rule 포함)를 만들고 최신 Revision으로 Rule을 바꾼 뒤, 오래된 Revision 변경이 412로 거부되고 상태가 그대로인지 확인한다.
+requirements: [TR-E2E-0701, TR-E2E-0702, TR-E2E-0703, TR-E2E-0704, TR-SCN-0301, TR-SCN-0303]
+steps:
+  - name: Group 생성(VM Tag 조건)
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/domains/default/groups/scn-web, auth: basic, body: '{"display_name":"scn-web","expression":[{"resource_type":"Condition","member_type":"VirtualMachine","key":"Tag","operator":"EQUALS","value":"tier|web"}]}'}
+    expect: {status: 200}
+  - name: Service 생성(TCP 8443)
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/services/scn-app, auth: basic, body: '{"display_name":"scn-app","service_entries":[{"resource_type":"L4PortSetServiceEntry","id":"tcp-8443","l4_protocol":"TCP","destination_ports":["8443"]}]}'}
+    expect: {status: 200}
+  - name: Security Policy와 Rule 생성
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy, auth: basic, body: '{"display_name":"scn-policy","category":"Application","rules":[{"id":"allow-app","action":"ALLOW","source_groups":["/infra/domains/default/groups/scn-web"],"destination_groups":["ANY"],"services":["/infra/services/scn-app"],"scope":["ANY"],"sequence_number":10}]}'}
+    expect: {status: 200}
+  - name: Policy Realization 대기
+    stage: inspect
+    http: {target: nsx, method: GET, path: "/policy/api/v1/infra/realized-state/status?intent_path=/infra/domains/default/security-policies/scn-policy", auth: basic}
+    expect: {status: 200, json: {consolidated_status.consolidated_status: SUCCESS}}
+    retry: {attempts: 40, interval_ms: 50}
+  - name: Rule 조회(Revision 저장)
+    stage: inspect
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy/rules/allow-app, auth: basic}
+    expect: {status: 200, json: {action: ALLOW, sequence_number: 10}}
+    save: {rev0: _revision, rule_id: rule_id}
+  - name: 최신 Revision으로 Rule 수정(DROP, 로그)
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy/rules/allow-app, auth: basic, body: '{"action":"DROP","logged":true,"source_groups":["/infra/domains/default/groups/scn-web"],"destination_groups":["ANY"],"services":["/infra/services/scn-app"],"scope":["ANY"],"sequence_number":10,"_revision":${rev0}}'}
+    expect: {status: 200}
+  - name: 변경 반영·rule_id 유지
+    stage: verify
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy/rules/allow-app, auth: basic}
+    expect: {status: 200, json: {action: DROP, logged: true, rule_id: "${rule_id}"}}
+    save: {rev1: _revision}
+  - name: 오래된 Revision 변경 거부(412)
+    stage: error
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy/rules/allow-app, auth: basic, body: '{"action":"ALLOW","source_groups":["ANY"],"destination_groups":["ANY"],"services":["ANY"],"_revision":${rev0}}'}
+    expect: {status: 412}
+  - name: 거부 뒤 상태 불변
+    stage: verify
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy/rules/allow-app, auth: basic}
+    expect: {status: 200, json: {action: DROP, _revision: "${rev1}"}}
+  - name: 정책 본문의 Rule 1개
+    stage: verify
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/domains/default/security-policies/scn-policy, auth: basic}
+    expect: {status: 200, json: {rules.#: 1, rules.0.action: DROP}}

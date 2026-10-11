@@ -1,0 +1,222 @@
+# Ansible 자체 테스트(TR-COV-0306, 2026-10-11 사용자 결정: Ansible만 채택, Terraform 미채택).
+# 실제 CMP·실환경 검증이 아니라 범용 자동화 도구가 시뮬레이터를 실제 vCenter·NSX처럼 다루는지 보는 자체 시험이다
+# (검증 상한 Integration Tested).
+#
+# 실행: 40-test/ansible/ansible_test.go(TestAnsiblePlaybook)가 시뮬레이터를 띄우고 아래 환경변수를 채워 부른다.
+#   SIM_VC_HOST·SIM_VC_PORT  vCenter 주소(이름 vcenter.<도메인> 또는 IP)·포트
+#   SIM_NSX_URL              https://<nsx 주소>:<포트>
+#   SIM_VC_USER·SIM_VC_PASSWORD·SIM_NSX_USER·SIM_NSX_PASSWORD  시뮬레이터 사용자(users.json, 명령행에 노출하지 않는다)
+#   SIM_VALIDATE_CERTS       true면 인증서 검증(이름 접속 + SSL_CERT_FILE=시뮬레이터 CA), false면 IP 접속(이름 해석 불가 환경)
+#   SIM_CA_FILE              시뮬레이터 루트 CA(PEM)
+# 컬렉션: community.vmware(requirements.yml) — SOAP(pyVmomi). NSX는 공식 Galaxy 컬렉션이 없어 ansible.builtin.uri로 Policy API를 부른다.
+- name: CloudInfra Simulator — Ansible self test
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    vc_validate: "{{ lookup('env', 'SIM_VALIDATE_CERTS') | bool }}"
+    nsx_url: "{{ lookup('env', 'SIM_NSX_URL') }}"
+    nsx_user: "{{ lookup('env', 'SIM_NSX_USER') }}"
+    nsx_password: "{{ lookup('env', 'SIM_NSX_PASSWORD') }}"
+    ca_file: "{{ lookup('env', 'SIM_CA_FILE') }}"
+    vm_name: ansible-vm-01
+    seg_id: ansible-seg-01
+    seg_tz: /infra/sites/default/enforcement-points/default/transport-zones/tz-overlay
+  module_defaults:
+    group/community.vmware.vmware:
+      hostname: "{{ lookup('env', 'SIM_VC_HOST') }}"
+      port: "{{ lookup('env', 'SIM_VC_PORT') | int }}"
+      username: "{{ lookup('env', 'SIM_VC_USER') }}"
+      password: "{{ lookup('env', 'SIM_VC_PASSWORD') }}"
+      validate_certs: "{{ vc_validate }}"
+    ansible.builtin.uri:
+      url_username: "{{ nsx_user }}"
+      url_password: "{{ nsx_password }}"
+      force_basic_auth: true
+      validate_certs: "{{ vc_validate }}"
+      ca_path: "{{ ca_file if vc_validate else omit }}"
+      return_content: true
+  tasks:
+    # ── vCenter: 버전·인벤토리 조회 ──────────────────────────────────────────
+    - name: vCenter about
+      community.vmware.vmware_about_info:
+      register: about
+    - name: 버전·빌드는 프로파일 값(vCenter 7.0.3, 24927011)
+      ansible.builtin.assert:
+        that:
+          - about.about_info.version == '7.0.3'
+          - about.about_info.build == '24927011'
+          - about.about_info.api_type == 'VirtualCenter'
+
+    - name: 데이터센터 목록
+      community.vmware.vmware_datacenter_info:
+      register: dcs
+    - name: Fixture 데이터센터 DC0
+      ansible.builtin.assert:
+        that: "'DC0' in (dcs.datacenter_info | map(attribute='name') | list)"
+
+    - name: 클러스터 정보
+      community.vmware.vmware_cluster_info:
+        datacenter: DC0
+      register: clusters
+    - name: Fixture 클러스터 DC0_C0·호스트 3대
+      ansible.builtin.assert:
+        that:
+          - "'DC0_C0' in clusters.clusters"
+          - clusters.clusters['DC0_C0'].hosts | length == 3
+
+    - name: VM 목록
+      community.vmware.vmware_vm_info:
+      register: vms_before
+    - name: Fixture VM 20개 이상(default-small)
+      ansible.builtin.assert:
+        that: vms_before.virtual_machines | length >= 20
+
+    # ── vCenter: VM 생명주기·멱등성 ─────────────────────────────────────────
+    - name: VM 생성·전원 켜기
+      community.vmware.vmware_guest:
+        name: "{{ vm_name }}"
+        datacenter: DC0
+        cluster: DC0_C0
+        folder: /DC0/vm
+        guest_id: otherGuest64
+        state: poweredon
+        disk:
+          - size_gb: 1
+            type: thin
+            datastore: LocalDS_0
+        hardware:
+          memory_mb: 512
+          num_cpus: 1
+        networks:
+          - name: DC0_DVPG0
+      register: created
+    - name: 생성은 변경으로 보고
+      ansible.builtin.assert:
+        that: created is changed
+
+    - name: 같은 요청 다시(멱등성)
+      community.vmware.vmware_guest:
+        name: "{{ vm_name }}"
+        datacenter: DC0
+        cluster: DC0_C0
+        folder: /DC0/vm
+        guest_id: otherGuest64
+        state: poweredon
+        disk:
+          - size_gb: 1
+            type: thin
+            datastore: LocalDS_0
+        hardware:
+          memory_mb: 512
+          num_cpus: 1
+        networks:
+          - name: DC0_DVPG0
+      register: again
+    - name: 두 번째 실행은 변경 없음
+      ansible.builtin.assert:
+        that: again is not changed
+
+    - name: 전원 끄기
+      community.vmware.vmware_guest_powerstate:
+        name: "{{ vm_name }}"
+        datacenter: DC0
+        folder: /DC0/vm
+        state: powered-off
+      register: powered_off
+    - name: 전원 끄기는 변경
+      ansible.builtin.assert:
+        that: powered_off is changed
+
+    - name: 메모리 재구성(꺼진 VM)
+      community.vmware.vmware_guest:
+        name: "{{ vm_name }}"
+        datacenter: DC0
+        folder: /DC0/vm
+        state: present
+        hardware:
+          memory_mb: 1024
+      register: reconf
+    - name: VM 정보
+      community.vmware.vmware_guest_info:
+        name: "{{ vm_name }}"
+        datacenter: DC0
+      register: info
+    - name: 재구성 반영(메모리 1024 MB, 꺼짐)
+      ansible.builtin.assert:
+        that:
+          - reconf is changed
+          - info.instance.hw_memtotal_mb == 1024
+          - info.instance.hw_power_status == 'poweredOff'
+
+    - name: VM 삭제
+      community.vmware.vmware_guest:
+        name: "{{ vm_name }}"
+        datacenter: DC0
+        folder: /DC0/vm
+        state: absent
+      register: removed
+    - name: VM 목록(삭제 뒤)
+      community.vmware.vmware_vm_info:
+      register: vms_after
+    - name: 삭제됨, Fixture VM 수로 복귀
+      ansible.builtin.assert:
+        that:
+          - removed is changed
+          - vm_name not in (vms_after.virtual_machines | map(attribute='guest_name') | list)
+          - vms_after.virtual_machines | length == vms_before.virtual_machines | length
+
+    # ── vCenter: 인증 실패 ────────────────────────────────────────────────
+    - name: 잘못된 비밀번호
+      community.vmware.vmware_about_info:
+        password: wrong-password
+      register: badlogin
+      ignore_errors: true
+    - name: 인증 실패는 오류
+      ansible.builtin.assert:
+        that: badlogin is failed
+
+    # ── NSX: Policy API(ansible.builtin.uri) ─────────────────────────────
+    - name: NSX 노드 버전
+      ansible.builtin.uri:
+        url: "{{ nsx_url }}/api/v1/node/version"
+      register: nsxver
+    - name: NSX 버전은 프로파일 값(3.2.4.3)
+      ansible.builtin.assert:
+        that: nsxver.json.product_version is search('^3\\.2\\.4\\.3')
+
+    - name: Segment 생성(PATCH)
+      ansible.builtin.uri:
+        url: "{{ nsx_url }}/policy/api/v1/infra/segments/{{ seg_id }}"
+        method: PATCH
+        body_format: json
+        body:
+          display_name: "{{ seg_id }}"
+          transport_zone_path: "{{ seg_tz }}"
+        status_code: [200]
+    - name: Segment 조회
+      ansible.builtin.uri:
+        url: "{{ nsx_url }}/policy/api/v1/infra/segments/{{ seg_id }}"
+      register: seg
+    - name: 생성한 값이 보인다
+      ansible.builtin.assert:
+        that:
+          - seg.json.display_name == seg_id
+          - seg.json.transport_zone_path == seg_tz
+          - seg.json._revision is defined
+
+    - name: Segment 삭제
+      ansible.builtin.uri:
+        url: "{{ nsx_url }}/policy/api/v1/infra/segments/{{ seg_id }}"
+        method: DELETE
+        status_code: [200]
+    - name: 삭제 뒤 조회는 404
+      ansible.builtin.uri:
+        url: "{{ nsx_url }}/policy/api/v1/infra/segments/{{ seg_id }}"
+        status_code: [404]
+
+    - name: NSX 인증 실패는 403
+      ansible.builtin.uri:
+        url: "{{ nsx_url }}/policy/api/v1/infra/segments"
+        url_password: wrong-password
+        status_code: [403]

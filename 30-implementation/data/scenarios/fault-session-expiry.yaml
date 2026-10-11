@@ -1,0 +1,26 @@
+# Scenario 10 흐름(TR-E2E-1001 ~ 1003) + Virtual Clock(TR-SCN-0108): 세션 만료 주입과 가상 시간 유휴 만료, 재인증.
+name: fault-session-expiry
+description: 세션 계층 Fault로 다음 요청을 만료시키고 NotAuthenticated 뒤 재로그인을 확인한다. 이어서 Virtual Clock을 테스트 모드로 29분·31분 진행해 유휴 만료 경계를 확인한다.
+requirements: [TR-E2E-1001, TR-E2E-1002, TR-E2E-1003, TR-SCN-0108, TR-SCN-0303]
+steps:
+  - {name: SOAP 로그인, stage: login, soap: {action: login}}
+  - {name: 세션 사용, stage: inspect, soap: {action: count_vms}, expect: {count: 20}}
+  - name: 세션 만료 주입(이 사용자 다음 요청 1회)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"layer":"session","match":{"product":"vcenter","user":"${vcenter_user}"},"action":{"type":"expire"},"count":1}'}
+    expect: {status: 201}
+  - {name: 재요청 → NotAuthenticated, stage: error, soap: {action: count_vms}, expect: {fault: NotAuthenticated}}
+  - {name: 재로그인, stage: recover, soap: {action: login}}
+  - {name: 재로그인 뒤 정상, stage: verify, soap: {action: count_vms}, expect: {count: 20}}
+  - name: 가상 시간 29분 진행(테스트 모드)
+    stage: fault
+    http: {target: admin, method: PUT, path: /v1/clock, body: '{"mode":"test","advance_ms":1740000}'}
+    expect: {status: 200, json: {mode: test}}
+  - {name: 29분 유휴는 유효, stage: verify, soap: {action: count_vms}, expect: {count: 20}}
+  - name: 마지막 사용 뒤 31분 진행
+    stage: fault
+    http: {target: admin, method: PUT, path: /v1/clock, body: '{"advance_ms":1860000}'}
+    expect: {status: 200}
+  - {name: 유휴 만료 → NotAuthenticated, stage: error, soap: {action: count_vms}, expect: {fault: NotAuthenticated}}
+  - {name: 재인증, stage: recover, soap: {action: login}}
+  - {name: 재인증 뒤 정상, stage: verify, soap: {action: count_vms}, expect: {count: 20}}

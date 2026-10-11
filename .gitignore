@@ -1,0 +1,18 @@
+# NSX·vSphere Automation 공식 스펙은 라이선스 표기가 없어 저장소에 포함하지 않는다(PRD-4 D11).
+30-implementation/data/compatibility-profiles/nsx/*/nsx_api.json
+30-implementation/data/compatibility-profiles/nsx/*/nsx_policy_api.json
+30-implementation/data/compatibility-profiles/vcenter/*/vapi-openapi.json
+30-implementation/data/compatibility-profiles/vcenter/*/vapi-contract.json
+# 시험 원자료(go test -json): make evidence·CI에서 다시 만든다
+40-test/results*.json
+# 빌드 산출물·런타임 데이터
+*.exe
+*.test
+30-implementation/bin/
+sim-data/
+40-test/reports/
+dist/
+# Python 가상환경·캐시
+.venv/
+__pycache__/
+*.pyc

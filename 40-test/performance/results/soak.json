@@ -1,0 +1,38 @@
+[
+  {
+    "round": 1,
+    "requests": 11253,
+    "memory_mb": 139.751424,
+    "db_mb": 8.884056
+  },
+  {
+    "round": 2,
+    "requests": 20765,
+    "memory_mb": 138.563584,
+    "db_mb": 9.101144
+  },
+  {
+    "round": 3,
+    "requests": 29199,
+    "memory_mb": 139.538432,
+    "db_mb": 9.820992
+  },
+  {
+    "round": 4,
+    "requests": 37375,
+    "memory_mb": 141.074432,
+    "db_mb": 10.005312
+  },
+  {
+    "round": 5,
+    "requests": 44620,
+    "memory_mb": 137.539584,
+    "db_mb": 10.515112
+  },
+  {
+    "round": 6,
+    "requests": 52032,
+    "memory_mb": 138.702848,
+    "db_mb": 10.69124
+  }
+]

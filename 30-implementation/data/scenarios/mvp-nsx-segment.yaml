@@ -1,0 +1,59 @@
+# MVP 시나리오: NSX Segment와 Realization (TR-SCN-0301 단계 ②~⑥, Scenario 06 흐름). 실행: Admin API POST /v1/scenarios/{name}/start 또는 40-test simulator-e2e/TestScenarioRunner
+name: mvp-nsx-segment
+description: NSX Policy API로 Segment를 생성·조회·수정·삭제하고 설정 지연 Realization과 기본 오류(Revision 충돌, 스키마 위반, 없는 ID)를 확인한다.
+requirements: [TR-SCN-0301, TR-E2E-0601, TR-E2E-0604, TR-COV-0302, TR-COV-0303]
+steps:
+  - name: NSX 인증(Basic) 확인
+    stage: login
+    http: {target: nsx, method: GET, path: /api/v1/node/version, auth: basic}
+    expect: {status: 200, json: {product_version: 3.2.4.3.0.24942842}}
+  - name: Realization 지연 설정(Admin)
+    stage: workflow
+    http: {target: admin, method: PUT, path: /v1/nsx/realization-delay, body: '{"ms":500}'}
+    expect: {status: 200}
+  - name: Segment 생성(PATCH)
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic, body: '{"display_name":"mvp-seg","subnets":[{"gateway_address":"10.20.0.1/24"}]}'}
+    expect: {status: 200, empty_body: true}
+  - name: 지연 중 Realization
+    stage: inspect
+    http: {target: nsx, method: GET, path: "/policy/api/v1/infra/realized-state/status?intent_path=/infra/segments/mvp-seg", auth: basic}
+    expect: {status: 200, json: {consolidated_status.consolidated_status: IN_PROGRESS, publish_status: UNREALIZED}}
+  - {name: 지연 대기, stage: workflow, wait_ms: 700}
+  - name: 지연 후 Realization
+    stage: verify
+    http: {target: nsx, method: GET, path: "/policy/api/v1/infra/realized-state/status?intent_path=/infra/segments/mvp-seg", auth: basic}
+    expect: {status: 200, json: {consolidated_status.consolidated_status: SUCCESS, publish_status: REALIZED}}
+  - name: Segment 조회
+    stage: inspect
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic}
+    expect: {status: 200, json: {path: /infra/segments/mvp-seg, _revision: 0, admin_state: UP}}
+    save: {rev: _revision}
+  - name: 오래된 Revision으로 PUT
+    stage: error
+    http: {target: nsx, method: PUT, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic, body: '{"display_name":"x","_revision":7}'}
+    expect: {status: 412}
+  - name: 스키마 위반(enum)
+    stage: error
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic, body: '{"admin_state":"SIDEWAYS"}'}
+    expect: {status: 400}
+  - name: 현재 Revision으로 PUT
+    stage: workflow
+    http: {target: nsx, method: PUT, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic, body: '{"display_name":"mvp-seg-v2","_revision":${rev}}'}
+    expect: {status: 200}
+  - name: 변경 확인
+    stage: verify
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic}
+    expect: {status: 200, json: {display_name: mvp-seg-v2, _revision: 1}}
+  - name: 삭제
+    stage: workflow
+    http: {target: nsx, method: DELETE, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic}
+    expect: {status: 200}
+  - name: 삭제 후 조회
+    stage: verify
+    http: {target: nsx, method: GET, path: /policy/api/v1/infra/segments/mvp-seg, auth: basic}
+    expect: {status: 404}
+  - name: 지연 설정 복원
+    stage: workflow
+    http: {target: admin, method: PUT, path: /v1/nsx/realization-delay, body: '{"ms":0}'}
+    expect: {status: 200}

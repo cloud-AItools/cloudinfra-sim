@@ -1,0 +1,72 @@
+# NSX 장애 단계(TR-SCN-0303, FR-NSX-0505·0506, FR-FLT-0118·0119): Realization 실패·정지, Revision 충돌 주입, 전송 Timeout·끊김, 재수정 복구.
+name: fault-nsx-realization
+description: Segment Realization 실패와 정지(Timeout 상황), 강제 Revision 충돌, 전송 계층 Timeout·연결 끊김을 주입하고 재수정으로 정상 실현에 돌아오는지 확인한다.
+requirements: [TR-SCN-0303, TR-SCN-0109, TR-SCN-0110, FR-NSX-0505, FR-NSX-0506, FR-FLT-0118, FR-FLT-0119]
+steps:
+  - name: Realization 실패 주입(scn-bad)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"layer":"nsx","match":{"path_prefix":"/policy/api/v1/infra/segments/scn-bad"},"action":{"type":"realization_fail","message":"Transport node unreachable"},"count":1}'}
+    expect: {status: 201}
+  - name: Realization 정지 주입(scn-stuck)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"layer":"nsx","match":{"path_prefix":"/policy/api/v1/infra/segments/scn-stuck"},"action":{"type":"realization_hang"},"count":1}'}
+    expect: {status: 201}
+  - name: scn-bad 생성
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/segments/scn-bad, auth: basic, body: '{"display_name":"scn-bad"}'}
+    expect: {status: 200}
+  - name: scn-stuck 생성
+    stage: workflow
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/segments/scn-stuck, auth: basic, body: '{"display_name":"scn-stuck"}'}
+    expect: {status: 200}
+  - name: 실패 상태 ERROR
+    stage: error
+    http: {target: nsx, method: GET, path: "/policy/api/v1/infra/realized-state/status?intent_path=/infra/segments/scn-bad", auth: basic}
+    expect: {status: 200, json: {consolidated_status.consolidated_status: ERROR}}
+  - {name: 정지 관찰 대기, stage: workflow, wait_ms: 150}
+  - name: 정지 상태 IN_PROGRESS 유지
+    stage: error
+    http: {target: nsx, method: GET, path: "/policy/api/v1/infra/realized-state/status?intent_path=/infra/segments/scn-stuck", auth: basic}
+    expect: {status: 200, json: {consolidated_status.consolidated_status: IN_PROGRESS}}
+  - name: Revision 충돌 주입(다음 PUT 1회)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"layer":"nsx","match":{"method":"PUT"},"action":{"type":"revision_conflict"},"count":1}'}
+    expect: {status: 201}
+  - name: PUT → 412
+    stage: error
+    http: {target: nsx, method: PUT, path: /policy/api/v1/infra/segments/scn-stuck, auth: basic, body: '{"display_name":"scn-stuck","_revision":0}'}
+    expect: {status: 412}
+  - name: 전송 Timeout 주입(다음 node/version 1회, 2초 붙잡음)
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"match":{"product":"nsx","path_prefix":"/api/v1/node/version"},"action":{"type":"timeout","delay_ms":2000},"count":1}'}
+    expect: {status: 201}
+  - name: 클라이언트 Timeout(500 ms)
+    stage: error
+    http: {target: nsx, method: GET, path: /api/v1/node/version, auth: basic, timeout_ms: 500}
+    expect: {transport_error: timeout}
+  - name: 연결 끊김 주입
+    stage: fault
+    http: {target: admin, method: POST, path: /v1/faults, body: '{"match":{"product":"nsx","path_prefix":"/api/v1/cluster/status"},"action":{"type":"reset"},"count":1}'}
+    expect: {status: 201}
+  - name: 연결 끊김 → 전송 오류
+    stage: error
+    http: {target: nsx, method: GET, path: /api/v1/cluster/status, auth: basic}
+    expect: {transport_error: any}
+  - name: 재시도 → 정상 응답
+    stage: recover
+    http: {target: nsx, method: GET, path: /api/v1/node/version, auth: basic}
+    expect: {status: 200}
+    retry: {attempts: 10, interval_ms: 200}
+  - name: 재수정으로 복구(scn-stuck)
+    stage: recover
+    http: {target: nsx, method: PATCH, path: /policy/api/v1/infra/segments/scn-stuck, auth: basic, body: '{"description":"retry"}'}
+    expect: {status: 200}
+  - name: 복구 뒤 SUCCESS
+    stage: verify
+    http: {target: nsx, method: GET, path: "/policy/api/v1/infra/realized-state/status?intent_path=/infra/segments/scn-stuck", auth: basic}
+    expect: {status: 200, json: {consolidated_status.consolidated_status: SUCCESS}}
+    retry: {attempts: 40, interval_ms: 50}
+  - name: NSX 알람 조회(실패 Segment)
+    stage: inspect
+    http: {target: admin, method: GET, path: "/v1/events?limit=5"}
+    expect: {status: 200, json: {nsx_alarms.0.intent_path: /infra/segments/scn-bad}}

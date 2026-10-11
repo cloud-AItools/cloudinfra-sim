@@ -1,0 +1,23 @@
+# vCenter 7.0.3 버전별 동작 규칙(FR-VC-0418, VERSION_PROFILE_SPEC §2). 규칙마다 근거를 적는다.
+# vcsim이 이미 재현하는 규칙(전원 상태별 PowerOn/Off·Destroy의 InvalidPowerState, 같은 폴더의 DuplicateName,
+# 없는 객체의 ManagedObjectNotFound)은 vcsim 동작을 쓰고 여기서 다시 정의하지 않는다.
+capacity:
+  # 가상 용량(FR-BE-0701·0702): VM 하나의 vCPU·메모리는 Fixture 호스트 용량을 넘을 수 없다.
+  # 위반 시 Task error InsufficientResourcesFault(BEHAVIOR_SPEC §2). 근거: 가정(계약 근거 미확보), 수용 기준 예시는 PRD-1 FR-BE-0701.
+  fault: InsufficientResourcesFault
+  basis: assumption
+reconfigure_powered_on:
+  # 전원이 켜진 VM의 CPU·메모리 변경: 증가는 Hot-add가 켜져 있을 때만, 감소는 전원 끔 상태에서만 허용한다.
+  # 근거: vSphere 문서의 CPU·메모리 Hot-add 규칙(조건). Fault 타입은 가정(InvalidPowerState).
+  cpu_increase_requires_hot_add: true
+  cpu_decrease_requires_power_off: true
+  memory_increase_requires_hot_add: true
+  memory_decrease_requires_power_off: true
+  fault: InvalidPowerState
+  basis: assumption (fault type)
+session:
+  # 세션 유휴 만료(FR-API-0204, FR-BE-0607): 가상 시간 기준. 만료된 SOAP 세션은 NotAuthenticated, REST 세션은 401.
+  # 근거: 가정(vCenter 기본 유휴 세션 만료 30분으로 알려진 값, 공식 문서 근거 미확보).
+  idle_timeout_sec: 1800
+  rest_idle_timeout_sec: 1800
+  basis: assumption

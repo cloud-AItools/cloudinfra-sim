@@ -1,0 +1,98 @@
+# API별 검증 상태(TR-COV-0201). cmd/evidence가 생성한다. 손으로 Integration Tested로 고치지 않는다.
+commit: src-86f595012fbf0336
+profile_hash: 53f474b18611efd4d108c8bccab64aace05649eb421eec568d9ba5c1eed9b9ac
+generated_at: 2026-10-11T12:19:45Z (cmd/evidence)
+apis:
+    VC-LOOKUP-001:
+        status: Integration Tested
+        evidence: [SRC-GOVMOMI, contract/TestLookupService]
+    VC-NET-001:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario08_CrossSystemWorkflow, contract/TestReconcileRepairsDrift, contract/TestSOAPSchemaContract]
+    VC-PBM-001:
+        status: Integration Tested
+        evidence: [SRC-GOVMOMI, contract/TestPBMStoragePolicy]
+    VC-REST-001:
+        status: Integration Tested
+        evidence: [SRC-VAPI-SDK-7032, contract/TestRESTSessionContract, contract/TestRESTViewMatchesSOAP]
+    VC-REST-002:
+        status: Integration Tested
+        evidence: [SRC-VAPI-SDK-7032, contract/TestRESTInventoryContract, contract/TestRESTVMGetContract, contract/TestRESTViewMatchesSOAP]
+    VC-REST-003:
+        status: Integration Tested
+        evidence: [SRC-VAPI-SDK-7032, contract/TestRESTInventoryContract]
+    VC-REST-004:
+        status: Integration Tested
+        evidence: [SRC-VAPI-SDK-7032, contract/TestRESTApplianceVersionContract]
+    VC-REST-007:
+        status: Integration Tested
+        evidence: [SRC-VAPI-SDK-7032, contract/TestContentLibraryContract]
+    VC-SOAP-001:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, SRC-KB-326316, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestSOAPSchemaContract]
+    VC-SOAP-002:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario01_ConnectAndDiscover, simulator-e2e/TestScenario01_AuthenticationFailures, contract/TestSOAPSchemaContract]
+    VC-SOAP-003:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario01_ConnectAndDiscover, contract/TestSOAPSchemaContract]
+    VC-SOAP-004:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestContainerViewAndPagedRetrieve, contract/TestSOAPSchemaContract]
+    VC-SOAP-005:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestContainerViewAndPagedRetrieve, contract/TestVersionAwareSerialization, contract/TestFilterUnit, contract/TestSOAPSchemaContract]
+    VC-SOAP-006:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestFilterAndWaitForUpdatesEx, contract/TestSOAPSchemaContract]
+    VC-SOAP-007:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestFilterAndWaitForUpdatesEx, contract/TestPropertyCollectorVersions, contract/TestSOAPSchemaContract]
+    VC-SOAP-008:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario03_CreateVM, contract/TestNegativeSOAP, contract/TestSOAPSchemaContract]
+    VC-SOAP-009:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario04_Reconfigure, contract/TestSOAPSchemaContract]
+    VC-SOAP-010:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario04_Reconfigure, simulator-e2e/TestScenario05_Delete, contract/TestTaskRetentionAndLogs, contract/TestSOAPSchemaContract]
+    VC-SOAP-011:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario05_Delete, contract/TestSOAPSchemaContract]
+    VC-SOAP-012:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, simulator-e2e/TestScenario03_CreateVM, contract/TestTaskRetentionAndLogs, contract/TestSOAPSchemaContract]
+    VC-SOAP-013:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVimServiceVersions, contract/TestMethodNotInSessionVersion]
+    VC-SOAP-014:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVirtualMetrics, contract/TestSOAPSchemaContract]
+    VC-SOAP-015:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVCenterEvents, contract/TestEventTimeFilterVirtualClock, contract/TestSOAPSchemaContract]
+    VC-SOAP-016:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVCenterEvents]
+    VC-SOAP-017:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]
+    VC-SOAP-018:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]
+    VC-SOAP-019:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]
+    VC-SOAP-020:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]
+    VC-SOAP-021:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]
+    VC-SOAP-022:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]
+    VC-SOAP-023:
+        status: Integration Tested
+        evidence: [SRC-VIM-TYPEINFO, contract/TestVMLifecycleExtended]

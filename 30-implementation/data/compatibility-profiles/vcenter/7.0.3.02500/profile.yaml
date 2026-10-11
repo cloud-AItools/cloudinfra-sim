@@ -1,0 +1,59 @@
+# vCenter 7.0 U3w 프로파일 (PRD-4 D1 첫 기준 조합, VERSION_PROFILE_SPEC.md)
+product: VMware vCenter Server
+version: 7.0.3
+build: "24927011"
+api_version: 7.0.3.0
+# /sdk/vimServiceVersions.xml의 priorVersions (FR-VC-0207). pyVmomi 버전 표의 7.0.3.0 이전 vim25 버전.
+prior_versions: [7.0.2.1, 7.0.2.0, 7.0.1.1, 7.0.1.0, 7.0.0.2, 7.0.0.0, 6.7.3, 6.7.2, 6.7.1, 6.7, 6.5, 6.0, 5.5, 5.1, 5.0]
+# ServiceContent.about (FR-API-0306). version·build: Broadcom KB 326316. 나머지 필드 형식은 vCenter 관례(vcsim VPX 기본값과 같은 구성).
+about:
+  name: VMware vCenter Server
+  fullName: VMware vCenter Server 7.0.3 build-24927011
+  vendor: VMware, Inc.
+  version: 7.0.3
+  build: "24927011"
+  localeVersion: INTL
+  localeBuild: "000"
+  osType: linux-x64
+  productLineId: vpx
+  apiType: VirtualCenter
+  apiVersion: 7.0.3.0
+  licenseProductName: VMware VirtualCenter Server
+  licenseProductVersion: "7.0"
+# GET /api/appliance/system/version → Version.VersionStruct (SRC-VAPI-SDK-7032: 7개 문자열 필드 필수).
+# install_time은 환경 생성 시각으로 채운다. releasedate·summary·type 값의 형식은 가정이다.
+appliance_version:
+  product: VMware vCenter Server
+  type: vCenter Server with an embedded Platform Services Controller
+  version: 7.0.3.02500
+  build: "24927011"
+  releasedate: "September 29, 2025"
+  summary: Patch for VMware vCenter Server 7.0
+# 수신 TLS 버전(R-45 ③, 2026-10-11 결정): vSphere는 8.0 U3부터 TLS 1.3을 지원한다(KB 377237). 7.0 TLS Configurator는 1.0 ~ 1.2만 다룬다(KB 313841).
+tls:
+  max_version: "1.2"
+  basis: KB 377237, KB 313841 — 7.0에 TLS 1.3 없음(문서상 추론). 하한은 Gateway 기본 1.2.
+typeinfo: vim-typeinfo.json
+spec_sources:
+  - id: SRC-VIM-TYPEINFO
+    file: vim-typeinfo.json
+    version: pyVmomi 9.1.1.0 (_typeinfo_core/query/vim)
+    origin: https://pypi.org/project/pyvmomi/9.1.1.0/ (Apache-2.0), 추출 .agentic/poc/tools/extract_pyvmomi.py
+  - id: SRC-GOVMOMI
+    version: govmomi v0.56.0
+    origin: https://github.com/vmware/govmomi (Apache-2.0)
+  - id: SRC-KB-326316
+    version: 7.0.3.02500 / 24927011
+    origin: https://knowledge.broadcom.com/external/article/326316 (조회 2026-10-10)
+  - id: SRC-VAPI-703
+    version: vSphere Automation API 7.0U3
+    origin: https://developer.broadcom.com/xapis/vsphere-automation-api/v7.0U3/
+    note: 2026-10-10 포털 'temporarily unavailable'로 미확보. 대체 근거 SRC-VAPI-SDK-7032 사용(결정 ②).
+  - id: SRC-VAPI-SDK-7032
+    file: vapi-contract.json (저장소 밖, 50-deployment/install/Get-VapiContract.ps1로 생성)
+    version: vsphere-automation-sdk-python v7.0.3.2 — vapi_client_bindings 3.8.0, vapi_runtime 2.34.0
+    sha256: 131da7d55a89f7030aa0970a1e0579c5782e630124680f456af5f59dd5917ec1   # Phase 4b: content 모듈·요청 매핑 추가 추출(이전 a6953bec…d8db7)
+    origin: https://github.com/vmware-archive/vsphere-automation-sdk-python/tree/v7.0.3.2/lib (MIT, archived)
+    note: 오퍼레이션·구조체·열거형·선언 오류·오류 HTTP 매핑, 요청 매핑(본문·경로·쿼리·분기 매개변수). Phase 4b에 content(Content Library) 모듈 추가. 원본 파일 머리말의 저작권 표기 확인 전까지 저장소에 포함하지 않는다.
+# 기동 판정 대상 API (API_COVERAGE_MATRIX.md §3.1). 빈 목록 금지(FR-API-0302).
+execution_scope: [VC-SOAP-001, VC-SOAP-002, VC-SOAP-003, VC-SOAP-004, VC-SOAP-005, VC-SOAP-006, VC-SOAP-007, VC-SOAP-008, VC-SOAP-009, VC-SOAP-010, VC-SOAP-011, VC-SOAP-012, VC-SOAP-013, VC-SOAP-014, VC-SOAP-015, VC-SOAP-016, VC-NET-001, VC-REST-001, VC-REST-002, VC-REST-003, VC-REST-004, VC-SOAP-017, VC-SOAP-018, VC-SOAP-019, VC-SOAP-020, VC-SOAP-021, VC-SOAP-022, VC-SOAP-023, VC-LOOKUP-001, VC-PBM-001, VC-REST-007]
